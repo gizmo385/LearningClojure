@@ -20,7 +20,9 @@
   (testing "Variable argument graph creation"
     (let [g (createGraph "a" "1" "b" "2" "c" "3")]
       (is (= (.order g) 3))
-      (is (= (.size g) 0)))))
+      (is (= (.size g) 0))))
+  (testing "Invalid number of arguments for graph creation"
+    (is (thrown? IllegalArgumentException (createGraph "a" "1" "b")))))
 
 (deftest empty-graph-tests
   (testing "Empty graph has an empty vertex set"
@@ -68,4 +70,5 @@
            (.size h)      0
            (.find h "a")  nil ))
     (testing "Removing a vertex that doesn't exist"
-      (is (thrown? IllegalArgumentException (.removeVertex empty-graph "a"))))))
+      (is (thrown? IllegalArgumentException (.removeVertex empty-graph "a"))))
+    (testing "removing a vertex with edges")))

@@ -49,7 +49,7 @@
 
   (size [self]
     "Returns the number of edges in the graph"
-    (reduce + 0 (map #(.degree %1) vertices)))
+    (/ (reduce + 0 (map #(.degree %1) vertices)) 2))
 
   (addVertex [self key value]
     "Add a vertex to a graph. Throws an IllegalArgumentException if the graph already contains a
@@ -92,4 +92,12 @@
 (defn createGraph
   "Creates a graph with either no vertices or the specified vertices"
   ([] (createGraph ()))
-  ([vertices] (Graph. (set vertices))))
+  ([vertices] (Graph. (set vertices)))
+  ([key value] (.addVertex (createGraph) key value))
+  ([key value & pairs]
+   (if (even? (count pairs))
+     (loop [g (createGraph key value) pairs pairs]
+       (if (empty? pairs)
+         g
+         (recur (.addVertex g (first pairs) (second pairs)) (rest (rest pairs)))))
+     (throw (IllegalArgumentException. "That key already exists in this graph!")))))

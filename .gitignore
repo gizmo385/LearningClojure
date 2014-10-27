@@ -1,3 +1,15 @@
+### https://raw.github.com/github/gitignore/408c616ae0ad8f4b8101d8e876b9b67ac6b14059/Global/vim.gitignore
+
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+
+### https://raw.github.com/github/gitignore/408c616ae0ad8f4b8101d8e876b9b67ac6b14059/Clojure.gitignore
+
 pom.xml
 pom.xml.asc
 *jar
@@ -9,3 +21,14 @@ pom.xml.asc
 .lein-repl-history
 .lein-plugins/
 .lein-failures
+.nrepl-port
+
+
+### https://raw.github.com/github/gitignore/408c616ae0ad8f4b8101d8e876b9b67ac6b14059/Global/Linux.gitignore
+
+*~
+
+# KDE directory preferences
+.directory
+
+

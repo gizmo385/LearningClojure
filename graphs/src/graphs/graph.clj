@@ -64,7 +64,8 @@
     (let [vertex (.find self key)]
       (if (nil? vertex)
         (throw (IllegalArgumentException. "That key does not exist!"))
-        (Graph. (disj vertices vertex)))))
+        (let [vertices (set (map #(.removeEdge %1 key) vertices))]
+          (Graph. (disj vertices vertex))))))
 
   (addEdge [self u-key v-key]
     "Adds an edge between the vertices specified by the provided keys"

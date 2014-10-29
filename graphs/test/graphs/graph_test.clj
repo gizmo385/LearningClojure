@@ -59,16 +59,47 @@
     (testing "Duplicate edges don't get added"
       (is (= (.size (.addEdge h "a" "b")) 1)))))
 
+(deftest removing-edges
+  (testing "Removing an edge between 2 vertices"
+    (let [g (.addEdge (createGraph "a" "1" "b" "2") "a" "b")
+          h (.removeEdge g "a" "b")]
+      (are [x y] (= x y)
+           (.order g) 2
+           (.order h) 2
+           (.size g)  1
+           (.size h)  0)))
+  (testing "Removing multiple edges"
+    (let [g (createGraph "a" 1 "b" 2 "c" 3)
+          h (.addEdge (.addEdge g "a" "b") "a" "c")
+          k (.removeEdge (.removeEdge h "a" "b") "a" "c")]
+      (are [x y] (= x y)
+           (.order g) 3
+           (.order h) 3
+           (.order k) 3
+           (.size g)  0
+           (.size h)  2
+           (.size k)  0))))
+
 (deftest removing-vertices
-  (let [g (.addVertex (.addVertex (.addVertex empty-graph "a" "1") "b" "2") "c" "3")
-        h (.removeVertex g "a")]
-    (testing "Removing vertices without edges"
-      (are [expected actual] (= expected actual)
+  (testing "Removing vertices without edges"
+    (let [g (.addVertex (.addVertex (.addVertex empty-graph "a" "1") "b" "2") "c" "3")
+          h (.removeVertex g "a")]
+      (are [x y] (= x y)
            (.order g)     3
            (.order h)     2
            (.size g)      0
            (.size h)      0
-           (.find h "a")  nil ))
-    (testing "Removing a vertex that doesn't exist"
-      (is (thrown? IllegalArgumentException (.removeVertex empty-graph "a"))))
-    (testing "removing a vertex with edges")))
+           (.find h "a")  nil )))
+  (testing "Removing a vertex that doesn't exist"
+    (is (thrown? IllegalArgumentException (.removeVertex empty-graph "a"))))
+  (testing "removing a vertex with edges"
+    (let [g (createGraph "a" 1 "b" 2 "c" 3)
+          h (.addEdge (.addEdge g "a" "b") "a" "c")
+          k (.removeVertex h "a" )]
+      (are [x y] (= x y)
+           (.order g) 3
+           (.order h) 3
+           (.order k) 2
+           (.size g)  0
+           (.size h)  2
+           (.size k)  0))))

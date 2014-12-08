@@ -1,14 +1,5 @@
 (ns graphs.graph)
 
-(definterface IGraph
-  (addVertex [key value])
-  (removeVertex [key])
-  (addEdge [u-key v-key])
-  (removeEdge [u-key v-key])
-  (find [key])
-  (order [])
-  (size []))
-
 (definterface IVertex
   (addEdge [key])
   (removeEdge [key])
@@ -40,6 +31,15 @@
 
 (defmethod print-method Vertex [v ^java.io.Writer w]
   (.write w (str "(" (.key v) ", " (.value v) ")")))
+
+(definterface IGraph
+  (addVertex [key value])
+  (removeVertex [key])
+  (addEdge [u-key v-key])
+  (removeEdge [u-key v-key])
+  (find [key])
+  (order [])
+  (size []))
 
 (deftype Graph [vertices]
   IGraph
@@ -75,6 +75,7 @@
         (let [new-u (.addEdge u v-key)
               new-v (.addEdge v u-key)]
           (Graph. (conj (disj vertices u v) new-u new-v))))))
+
   (removeEdge [self u-key v-key]
     (let [u (.find self u-key)
           v (.find self v-key)]
@@ -90,6 +91,55 @@
         (= (.key curr) key) curr
         :else (recur (first vertices) (rest vertices))))))
 
+(definterface INetwork
+  (weightOfEdge [u-key, v-key]))
+
+(deftype Network
+  [graph              ; The graph that maintains the vertex set
+   weight-function]   ; A function that maps a pair of vertices to some meaningful value
+  IGraph
+  (addVertex [self key value]
+    "Add a vertex to a graph. Throws an IllegalArgumentException if the graph already contains a
+     vertex with the provided key"
+    (Network. (.addVertex (.graph self) key value) weight-function))
+
+  (removeVertex [self key]
+    "Attempts to remove the vertex specified with the provided key. Throws an
+     IllegalArgumentException if that key is not present in this graph"
+    (Network. (.removeVertex (.graph self) key) weight-function))
+
+  (addEdge [self u-key v-key]
+    "Adds an edge between the vertices specified by the provided keys"
+    (Network (.addEdge (.graph self) u-key v-key) weight-function))
+
+  (removeEdge [self u-key v-key]
+    (Network (.removeEdge (.graph self) u-key v-key) weight-function))
+
+  (find [self key]
+    "Finds the key in the graph. Returns nil if it is not present"
+    (.find (.graph self) key))
+
+  (order [self]
+    "Returns the number of vertices in this graph"
+    (.order (.graph self)))
+
+  (size [self]
+    "Returns the number of edges in the graph"
+    (.size (.graph self)))
+  INetwork
+  (weightOfEdge [self u-key v-key]
+    (let [u (.find self u-key)
+          v (.find self v-key)]
+      (weight-function u v))))
+
+(defn eulerian? [^IGraph g]
+  "A graph is Eulerian if and only if every vertex is even"
+  (and (map even? (map #(.degree %1) (.vertices g)))))
+
+(defn traversible? [^IGraph g]
+  "A graph is traversible if and only if it contains exactly two odd vertices"
+  (= (count (filter odd? (map #(.degree %1) (.vertices g)))) 2))
+
 (defn createGraph
   "Creates a graph with either no vertices or the specified vertices"
   ([] (createGraph ()))
@@ -101,4 +151,12 @@
        (if (empty? pairs)
          g
          (recur (.addVertex g (first pairs) (second pairs)) (rest (rest pairs)))))
-     (throw (IllegalArgumentException. "That key already exists in this graph!")))))
+     (throw (IllegalArgumentException. "There must be an even number of arguments!")))))
+
+(defn createNetwork
+  "Creates a network, which is defined as a graph and a weight function"
+  ([weight-function] (Network. (createGraph) weight-function))
+  ([weight-function vertices] (Network. (createGraph vertices) weight-function))
+  ([weight-function key value] (Network. (createGraph key value) weight-function))
+  ([weight-function key value & pairs]
+   (Network. (createGraph key value pairs) weight-function)))

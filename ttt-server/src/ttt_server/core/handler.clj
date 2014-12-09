@@ -26,66 +26,48 @@
    board])        ; A map of the game cells
 
 (def players (atom {}))
-
 (def games (atom {}))
 
 (defroutes app-routes
-  (GET "/login/:player_id" [id] login)
-  (GET "/getGames" [] getGames)
-  (GET "/newGame/:id" [id] newGame)
-  (GET "/joinGame/:player_id/:game_id" [player_id game_id] joinGame)
-  (GET "/myGame/:player_id" [] myGame)
-  (GET "/move" [] move)
+  (GET "/" []
+       (fn [client_data]
+         (let [query_args (:params client_data)
+               player_id (-> x :session/key str)]
+           (case (:cmd query_args)
+             "login" (login player_id)
+             "getGames" (getGames query_args)
+             "newGame" (newGame player_id query_args)
+             "joinGame" (joinGame player_id query_args)
+             "myGame" (myGame player_id query_args)
+             "move" (move player_id query_args)
+             (str "Unrecognized arguments: " (json/write-str query_args))))))
+  (GET "/secret-data" [] (fn [x] (str (:session/key x))))
   (route/not-found "Not Found"))
 
-(defn null-map [map_size]
-  "Creates a map which maps the numbers from (1..map_size inclusive) to the string null"
-  (loop [map {} iter 1]
-    (if (<= iter map_size)
-      (recur (assoc map iter "null") (inc iter))
-      map)))
-
-(defn create-game
-  [player1_id]  ; The id for the first player in the game
-  (let [game_id (gensym)
-    game {"game_id" game_id,
-    "game_state" "open",
-    "players"
-            {"player_id" player1_id,
-            "game_id" game_id,
-            "player_type" "X"},
-    "you"
-            {"player_id" player1_id,
-            "game_id" game_id,
-            "player_type" "X"},
-    "player_turn"
-            {"player_id" player1_id,
-            "game_id" game_id,
-            "player_type" "X"},
-    "board" (null-map 9),
-    "winner" "null"}]
-    (swap! games assoc game_id game)
-    game))
+(defn null-board [board_size]
+  "Creates a map which maps the numbers from (1..board_size inclusive) to the string null"
+  (loop [board {} iter 1]
+    (if (<= iter board_size)
+      (recur (assoc board iter "null") (inc iter))
+      board)))
 
 (defn login [args]
-  )
+  "login")
 
 (defn getGames [_]
   (json/write-str @games))
 
-(defn newGame [args]
-  (let [player_id (:id (:params args))
-        game (create-game player_id)]
-    (json/write-str game)))
+(defn newGame [player_id query_args]
+  "newGame")
 
-(defn joinGame [args]
-  (str (:params args)))
+(defn joinGame [player_id query_args]
+  "joinGame")
 
-(defn myGame [client_dump]
+(defn myGame [player_id query_args]
   "myGame")
 
-(defn move [client_dump]
-  "move")
+(defn move [player_id query_args]
+  (str "player with id \"" player_id "\" move"))
 
 (def app
   (wrap-defaults app-routes site-defaults))

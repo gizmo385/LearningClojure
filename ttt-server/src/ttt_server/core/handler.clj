@@ -4,6 +4,10 @@
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [clojure.data.json :as json]))
 
+(defmacro not-nil? [& forms]
+  "Returns true if none of the arguments evaluate to nil"
+  `(not (reduce #(or %1 %2) (map nil? (list ~@forms)))))
+
 ; Route function declarations
 (declare login)
 (declare getGames)
@@ -32,27 +36,33 @@
   (GET "/" []
        (fn [client_data]
          (let [query_args (:params client_data)
-               player_id (-> x :session/key str)]
+               player_id (-> client_data :session/key str)]
            (case (:cmd query_args)
-             "login" (login player_id)
+             "login"    (login player_id)
              "getGames" (getGames query_args)
-             "newGame" (newGame player_id query_args)
+             "newGame"  (newGame player_id query_args)
              "joinGame" (joinGame player_id query_args)
-             "myGame" (myGame player_id query_args)
-             "move" (move player_id query_args)
+             "myGame"   (myGame player_id query_args)
+             "move"     (move player_id query_args)
              (str "Unrecognized arguments: " (json/write-str query_args))))))
-  (GET "/secret-data" [] (fn [x] (str (:session/key x))))
+  (GET "/secret-data" [] #(:session/key %1))
+  (GET "/all-players" [] (fn [x] (json/write-str @players)))
   (route/not-found "Not Found"))
 
-(defn null-board [board_size]
+(defn fill-board [board_size fill_item]
   "Creates a map which maps the numbers from (1..board_size inclusive) to the string null"
-  (loop [board {} iter 1]
+  (loop [board {}
+         iter 1]
     (if (<= iter board_size)
-      (recur (assoc board iter "null") (inc iter))
+      (recur (assoc board iter fill_item) (inc iter))
       board)))
 
-(defn login [args]
-  "login")
+(defn login [player_id]
+  (if (not-nil? (get @players player_id))
+    (format "Welcome back %s!" player_id)
+    (let [player (Player. player_id nil nil)]
+      (swap! players assoc player_id player)
+      (format "Welcome new player %s" player_id))))
 
 (defn getGames [_]
   (json/write-str @games))

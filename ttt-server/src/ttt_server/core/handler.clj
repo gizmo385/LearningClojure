@@ -102,7 +102,10 @@
 
 
 (defn joinGame [player_id query_args]
-  "joinGame")
+  (let [game_id     (:game_id query_args)
+        game        (get @games game_id)
+        newPlayer   (get @players player_id)
+        players     (:players game)]))
 
 (defn myGame [player_id _]
   "Returns the current game state for the game that the player is in"

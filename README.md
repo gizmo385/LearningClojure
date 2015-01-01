@@ -1,4 +1,4 @@
-LearningClojure
+Clojure Experiments
 ===============
 
-Different experiments with Clojure
+Various experiments with Clojure that may or may not get finished

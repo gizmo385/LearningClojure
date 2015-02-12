@@ -11,22 +11,22 @@
   "This allows you to create states easily, as a simple syntactic construct
 
    For example:
-      (defstate fail)
-      (defstate other-fail :non-accepting)
-      (defstate pass :accepting)
-      (defstate other-pass :final)
+   (defstate fail)
+   (defstate other-fail :non-accepting)
+   (defstate pass :accepting)
+   (defstate other-pass :final)
 
    To create an accepting state, pass in :accepting or :final after the label. Any other keywords
    will not be recognized (but may be passed for the purpose of self-documentation)
-  "
+   "
   ([label]
    `(do
-       (ann ~(symbol label) State)
-       (def ~(symbol label) (State. ~(str label) false))))
-   ([label opt] (let [accepting?# (or (= opt :accepting) (= opt :final))]
-    `(do
-       (ann ~(symbol label) State)
-       (def ~(symbol label) (State. ~(str label) ~accepting?#))))))
+      (ann ~(symbol label) State)
+      (def ~(symbol label) (State. ~(str label) false))))
+  ([label opt] (let [accepting?# (or (= opt :accepting) (= opt :final))]
+                 `(do
+                    (ann ~(symbol label) State)
+                    (def ~(symbol label) (State. ~(str label) ~accepting?#))))))
 
 ; We represent a DFA as a 4-tuple:
 ; (1) A set of characters which represents the alphabet
@@ -45,12 +45,12 @@
 (ann accepts? [DFA String -> Bool])
 (defn accepts? [automaton input]
   (t/let [transition-f :- (IFn [State Character -> State]) (:transition-f automaton)]
-   (t/loop [current :- State                      (:start-state automaton)
-            sym     :- (Option Character)         (first input)
-            other   :- (Option (Seq Character))   (rest input)]
-    (if sym
-      (recur (transition-f current sym) (first other) (rest other))
-      (:accepting? current)))))
+    (t/loop [current :- State                      (:start-state automaton)
+             sym     :- (Option Character)         (first input)
+             other   :- (Option (Seq Character))   (rest input)]
+      (if sym
+        (recur (transition-f current sym) (first other) (rest other))
+        (:accepting? current)))))
 
 
 ; Define a DFA to accept strings following this regular expression: 0+1+

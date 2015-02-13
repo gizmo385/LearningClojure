@@ -28,6 +28,8 @@
                     (ann ~(symbol label) State)
                     (def ~(symbol label) (State. ~(str label) ~accepting?#))))))
 
+(defalias Automaton (U DFA))
+
 ; We represent a DFA as a 4-tuple:
 ; (1) A set of characters which represents the alphabet
 ; (2) A set of states that can be reached in the DFA
@@ -40,10 +42,13 @@
              transition-f :- (IFn [State Character -> State])])
 (defrecord DFA [alphabet states start-state transition-f])
 
-; This function will determine if a DFA accepts a particular input string. In other words, will the
-; input string result in the DFA ending on a state which is accepting
-(ann accepts? [DFA String -> Bool])
-(defn accepts? [automaton input]
+(ann accepts? [Automaton String -> Bool])
+(defmulti accepts?
+  "Given an automaton and a string, this will determine if the automaton accepts the string
+   as being a part of its language."
+  (t/fn [automaton :- Automaton, input :- String] :- Class (class automaton)))
+
+(defmethod accepts? DFA [automaton input]
   (t/let [transition-f :- (IFn [State Character -> State]) (:transition-f automaton)]
     (t/loop [current :- State                      (:start-state automaton)
              sym     :- (Option Character)         (first input)

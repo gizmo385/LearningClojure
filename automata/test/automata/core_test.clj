@@ -23,18 +23,8 @@
            others)
     others others))
 
-(def ones-zeroes-tm {
- start {\0 zeroes :otherwise others}
- zeroes {\0 zeroes \1 ones :otherwise others}
- ones {\1 ones :otherwise others}
- others {:otherwise others}
- })
-
 (def ones-zeroes
   (automata.core/DFA. #{\0 \1} #{start zeroes ones others} start ones-zeroes-tf))
-
-(def ones-zeroes-m
-  (automata.core/DFA. #{\0 \1} #{start zeroes ones others} start ones-zeroes-tm))
 
 (deftest a-test
   (testing "State creation"

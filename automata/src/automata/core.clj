@@ -1,6 +1,6 @@
 (ns automata.core
   (:require [clojure.core.typed :as t
-             :refer [U Bool defalias ann ann-record Set IFn Seq Option]]))
+             :refer [U Bool defalias ann ann-record Set IFn Seq Option Map Kw]]))
 
 ; A state contains a label and is either an accepting state or it isn't
 (ann-record State [label      :- String,
@@ -28,6 +28,10 @@
 
 (defalias Automaton (U DFA))
 
+(defalias TransitionMap (Map State (Map (U Kw Character) State)))
+(defalias TransitionFunc (IFn [State Character -> State]))
+(defalias Transition (U TransitionMap TransitionFunc))
+
 ; We represent a DFA as a 4-tuple:
 ; (1) A set of characters which represents the alphabet
 ; (2) A set of states that can be reached in the DFA
@@ -37,7 +41,7 @@
             [alphabet     :- (Set Character),
              states       :- (Set State),
              start-state  :- State
-             transition-f :- (IFn [State Character -> State])])
+             transition-f :- TransitionFunc])
 (defrecord DFA [alphabet states start-state transition-f])
 
 (ann accepts? [Automaton String -> Bool])
@@ -47,7 +51,7 @@
   (t/fn [automaton :- Automaton, input :- String] :- Class (class automaton)))
 
 (defmethod accepts? DFA [automaton input]
-  (t/let [transition-f :- (IFn [State Character -> State]) (:transition-f automaton)]
+  (t/let [transition-f :- TransitionFunc (:transition-f automaton)]
     (t/loop [current :- State                      (:start-state automaton)
              sym     :- (Option Character)         (first input)
              other   :- (Option (Seq Character))   (rest input)]
@@ -55,38 +59,14 @@
         (recur (transition-f current sym) (first other) (rest other))
         (:accepting? current)))))
 
-
-; Define a DFA to accept strings following this regular expression: 0+1+
-(comment
-  (defstate start)
-  (defstate zeroes)
-  (defstate other)
-  (defstate ones :accepting)
-
-  (ann zeroes-and-ones [State Character -> State])
-  (defn zeroes-and-ones [state sym]
-    (condp = state
-      ; Start state transitions
-      start (case sym
-              \0 zeroes
-              other)
-
-      ; Zero state transitions
-      zeroes (case sym
-               \0 zeroes
-               \1 ones
-               other)
-
-      ; One state transitions
-      ones (case sym
-             \0 other
-             \1 ones
-             other)
-
-      ; Other transitions
-      other other))
-
-  (def zeroes-and-ones-dfa
-    (DFA. #{\0 \1} #{start zeroes ones other} start zeroes-and-ones))
-
-  (map (partial accepts? zeroes-and-ones-dfa) ["10011" "0000000000010" "01" "222"]))
+(ann tmap->tfn [TransitionMap -> TransitionFunc])
+(defn tmap->tfn [tmap]
+  "This function can be used to create transition functions based on transition maps, which are
+   sometimes easier to express when designing the DFA."
+  (t/fn [state :- State, sym :- Character] :- State
+    (t/let [current     :- (Option (Map (U Character Kw) State)) (get tmap state)
+            next-state  :- (Option State) (or (get current sym) (get current :otherwise))]
+      (if next-state
+        next-state
+        (throw (IllegalArgumentException.
+                 (format "No transition for %s in %s" sym (:label state))))))))

@@ -1,6 +1,6 @@
 (ns automata.core
   (:require [clojure.core.typed :as t
-             :refer [U Bool defalias ann ann-record Set IFn Seq Option]]))
+             :refer [U Bool defalias ann ann-record Set IFn Seq Option Map]]))
 
 ; A state contains a label and is either an accepting state or it isn't
 (ann-record State [label      :- String,
@@ -21,12 +21,18 @@
    `(do
       (ann ~(symbol label) State)
       (def ~(symbol label) (State. ~(str label) false))))
-  ([label opt] (let [accepting?# (or (= opt :accepting) (= opt :final))]
-                 `(do
-                    (ann ~(symbol label) State)
-                    (def ~(symbol label) (State. ~(str label) ~accepting?#))))))
+  ([label opt]
+   (let [accepting?# (or (= opt :accepting) (= opt :final))]
+     `(do
+        (ann ~(symbol label) State)
+        (def ~(symbol label) (State. ~(str label) ~accepting?#))))))
 
 (defalias Automaton (U DFA))
+
+;; Different ways that transitions can be described
+(defalias TransitionFunc (IFn [State Character -> State]))
+(defalias TransitionMap (Map State (Map String State)))
+(defalias TransitionSpec (U TransitionFunc TransitionMap))
 
 ; We represent a DFA as a 4-tuple:
 ; (1) A set of characters which represents the alphabet
@@ -55,37 +61,58 @@
         (recur (transition-f current sym) (first other) (rest other))
         (:accepting? current)))))
 
+(ann-record DFA-m
+            [alphabet     :- (Set Character),
+             states       :- (Set State),
+             start-state  :- State
+             transition-m :- (Map State (Map String State))])
+(defrecord DFA-m [alphabet states start-state transition-m])
+
+(ann accepts?-m [DFA-m String -> Bool])
+(defn accepts?-m [automaton input]
+  (t/let [transition-m :- (Map State (Map String State)) (:transition-m automaton)]
+    (t/loop [current :- State                      (:start-state automaton)
+             sym     :- (Option Character)         (first input)
+             other   :- (Option (Seq Character))   (rest input)]
+      (if sym
+        (let [transitions (get transition-m current)
+              next-state (or (get transitions sym) (get transitions :otherwise))]
+          (if next-state
+            (recur next-state (first other) (rest other))
+            false))
+        (:accepting? current)))))
 
 ; Define a DFA to accept strings following this regular expression: 0+1+
-(defstate start)
-(defstate zeroes)
-(defstate other)
-(defstate ones :accepting)
+(comment
+  (defstate start)
+  (defstate zeroes)
+  (defstate other)
+  (defstate ones :accepting)
 
-(ann zeroes-and-ones [State Character -> State])
-(defn zeroes-and-ones [state sym]
-  (condp = state
-    ; Start state transitions
-    start (case sym
-            \0 zeroes
-            other)
+  (ann zeroes-and-ones [State Character -> State])
+  (defn zeroes-and-ones [state sym]
+    (condp = state
+      ; Start state transitions
+      start (case sym
+              \0 zeroes
+              other)
 
-    ; Zero state transitions
-    zeroes (case sym
-             \0 zeroes
+      ; Zero state transitions
+      zeroes (case sym
+               \0 zeroes
+               \1 ones
+               other)
+
+      ; One state transitions
+      ones (case sym
+             \0 other
              \1 ones
              other)
 
-    ; One state transitions
-    ones (case sym
-           \0 other
-           \1 ones
-           other)
+      ; Other transitions
+      other other))
 
-    ; Other transitions
-    other other))
+  (def zeroes-and-ones-dfa
+    (DFA. #{\0 \1} #{start zeroes ones other} start zeroes-and-ones))
 
-(def zeroes-and-ones-dfa
-  (DFA. #{\0 \1} #{start zeroes ones other} start zeroes-and-ones))
-
-(map (partial accepts? zeroes-and-ones-dfa) ["10011" "0000000000010" "01" "222"])
+  (map (partial accepts? zeroes-and-ones-dfa) ["10011" "0000000000010" "01" "222"]))

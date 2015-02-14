@@ -1,7 +1,7 @@
 (ns automata.core-test
   (:require [clojure.test :refer :all]
             [automata.core :refer :all])
-  (:import [automata.core DFA DFA-m]))
+  (:import [automata.core DFA]))
 
 ;;; Testing vars
 (defstate start)
@@ -34,7 +34,7 @@
   (automata.core/DFA. #{\0 \1} #{start zeroes ones others} start ones-zeroes-tf))
 
 (def ones-zeroes-m
-  (automata.core/DFA-m. #{\0 \1} #{start zeroes ones others} start ones-zeroes-tm))
+  (automata.core/DFA. #{\0 \1} #{start zeroes ones others} start ones-zeroes-tm))
 
 (deftest a-test
   (testing "State creation"
@@ -43,19 +43,9 @@
     (is (false? (:accepting? others)))
     (is (true? (:accepting? ones))))
 
-  (testing "DFA Acceptance"
+  (testing "Acceptance in DFAs with transition functions"
     (letfn [(accepted? [s] (true? (accepts? ones-zeroes s)))
             (not-accepted? [s] (false? (accepts? ones-zeroes s)))]
-      (is (not-accepted? "10011"))
-      (is (not-accepted? "00000000000010"))
-      (is (not-accepted? "0"))
-      (is (not-accepted? ""))
-      (is (not-accepted? "222"))
-      (is (accepted? "01"))))
-
-  (testing "DFA-m Acceptance"
-    (letfn [(accepted? [s] (true? (accepts?-m ones-zeroes-m s)))
-            (not-accepted? [s] (false? (accepts?-m ones-zeroes-m s)))]
       (is (not-accepted? "10011"))
       (is (not-accepted? "00000000000010"))
       (is (not-accepted? "0"))

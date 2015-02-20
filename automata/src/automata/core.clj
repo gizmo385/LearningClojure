@@ -28,9 +28,8 @@
 
 (defalias Automaton (U DFA))
 
-(defalias TransitionMap (Map State (Map (U Kw Character) State)))
-(defalias TransitionFunc (IFn [State Character -> State]))
-(defalias Transition (U TransitionMap TransitionFunc))
+(defalias DFATransitionMap (Map State (Map (U Kw Character) State)))
+(defalias DFATransitionFunc (IFn [State Character -> State]))
 
 ; We represent a DFA as a 4-tuple:
 ; (1) A set of characters which represents the alphabet
@@ -41,7 +40,7 @@
             [alphabet     :- (Set Character),
              states       :- (Set State),
              start-state  :- State
-             transition-f :- TransitionFunc])
+             transition-f :- DFATransitionFunc])
 (defrecord DFA [alphabet states start-state transition-f])
 
 (ann accepts? [Automaton String -> Bool])
@@ -51,7 +50,7 @@
   (t/fn [automaton :- Automaton, input :- String] :- Class (class automaton)))
 
 (defmethod accepts? DFA [automaton input]
-  (t/let [transition-f :- TransitionFunc (:transition-f automaton)]
+  (t/let [transition-f :- DFATransitionFunc (:transition-f automaton)]
     (t/loop [current :- State                      (:start-state automaton)
              sym     :- (Option Character)         (first input)
              other   :- (Option (Seq Character))   (rest input)]
@@ -59,7 +58,7 @@
         (recur (transition-f current sym) (first other) (rest other))
         (:accepting? current)))))
 
-(ann tmap->tfn [TransitionMap -> TransitionFunc])
+(ann tmap->tfn [DFATransitionMap -> DFATransitionFunc])
 (defn tmap->tfn [tmap]
   "This function can be used to create transition functions based on transition maps, which are
    sometimes easier to express when designing the DFA."

@@ -21,10 +21,11 @@
    `(do
       (ann ~(symbol label) State)
       (def ~(symbol label) (State. ~(str label) false))))
-  ([label opt] (let [accepting?# (or (= opt :accepting) (= opt :final))]
-                 `(do
-                    (ann ~(symbol label) State)
-                    (def ~(symbol label) (State. ~(str label) ~accepting?#))))))
+  ([label opt]
+   (let [accepting?# (or (= opt :accepting) (= opt :final))]
+     `(do
+        (ann ~(symbol label) State)
+        (def ~(symbol label) (State. ~(str label) ~accepting?#))))))
 
 (defalias Automaton (U DFA))
 

@@ -42,6 +42,7 @@
     (assoc universe :particles (into [] new-particles))))
 
 (defn step
+  "Runs the universe for a single time-step, where DT time passes between snapshots."
   [universe]
   (if-let [after-force (calculate-forces universe)]
     (assoc after-force :particles

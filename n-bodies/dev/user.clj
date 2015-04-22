@@ -2,8 +2,9 @@
   "Contains functions that will be automatically loaded into the REPL"
   (:use [n-bodies particle universe utils]
         [clojure.pprint]
+        [clojure.repl]
         [clojure.tools.namespace.repl]
-        [clojure.stacktrace]))
+        [clojure.stacktrace :only [print-stack-trace]]))
 
 (defn trace
   "Prints the first num-lines (or 10) lines of the stack trace for the root cause of the last stack

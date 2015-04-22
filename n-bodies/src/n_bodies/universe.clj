@@ -20,7 +20,7 @@
   [time-steps DT num-particles]
   (new-universe time-steps DT
                 (for [_ (range num-particles)]
-                  (new-particle [(rand-in-range -100 100) (rand-in-range -100 100)]))))
+                  (new-particle [(rand-in-range -5 5) (rand-in-range -5 5)]))))
 
 
 (defn calculate-force-for-particle
@@ -49,11 +49,12 @@
                 (after-force :particles)))
     {:error true}))
 
-(comment
-  (let [u (random-universe 1 1 2)]
-    (println "Before")
-    (pprint (u :particles))
-    (println "After")
-    (pprint ((step u) :particles))
-    )
-  )
+(defn simulate
+  "Simulates running the Universe for the number of time steps associated with the Universe. The
+   time between each time step is given by the DT amount associated with the Universe."
+  [universe]
+  (loop [universe universe
+         i 0]
+    (if (< i (universe :time-steps))
+      (recur (step universe) (inc i))
+      universe)))

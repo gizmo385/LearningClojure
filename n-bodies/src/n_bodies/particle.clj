@@ -38,11 +38,10 @@
   [particle seconds]
   (let [dvX (* (/ (particle :forceX) (particle :mass)) seconds)
         dvY (* (/ (particle :forceY) (particle :mass)) seconds)
-        dpX (* (+ (particle :velocityX) (/ dvX 2)) seconds)
-        dpY (* (+ (particle :velocityY) (/ dvY 2)) seconds)]
+        dpX (* (+ (particle :dx) (/ dvX 2)) seconds)
+        dpY (* (+ (particle :dy) (/ dvY 2)) seconds)]
     (assoc particle
-           :velocityX (+ (particle :velocityX) dvX)
-           :velocityY (+ (particle :velocityY) dvY)
+           :dx (+ (particle :dx) dvX)
+           :dy (+ (particle :dy) dvY)
            :x (+ (particle :x) dpX)
            :y (+ (particle :y) dpY))))
-

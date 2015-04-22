@@ -1,6 +1,6 @@
 (ns n-bodies.universe
   (:use [clojure.pprint]
-        [n-bodies.particle]))
+        [n-bodies particle utils]))
 
 (defn- rand-in-range
   "Returns a random number that is at least the low value, but at most the high value."
@@ -8,12 +8,12 @@
   (+ (rand (+ (- high low) 1)) low))
 
 (defn new-universe
-  "Creates a new universe"
+  "Creates a new Universe. Each Universe contains map of integers to particles where the integer
+   represents the particle's ID"
   [time-steps DT & particles]
-  (let [particle*    (apply vec particles)]
-    {:time-steps time-steps
-     :DT DT
-     :particles (zipmap (range (count particle*)) particle*)}))
+  {:time-steps time-steps
+   :DT DT
+   :particles (apply vec particles)})
 
 (defn random-universe
   "Creates a universe with a number of particles that have been randomly placed."
@@ -23,9 +23,37 @@
                   (new-particle [(rand-in-range -100 100) (rand-in-range -100 100)]))))
 
 
+(defn calculate-force-for-particle
+  "Calculates forces on this particle relative to other particles and returns it"
+  [universe particle]
+  (loop [particle particle
+         others (universe :particles)]
+    (if (empty? others)
+      particle
+      (if (= ((first others) :id) (particle :id))
+        (recur particle (rest others))
+        (recur (calculate-force particle (first others)) (rest others))))))
+
 (defn calculate-forces
-  "Calculates forces between particles in the Universe and returns a new Universe"
-  [universe])
+  "Calculates the forces for all of the particles in the Universe and returns the modified
+   universe."
+  [universe]
+  (let [new-particles (map (partial calculate-force-for-particle universe) (universe :particles))]
+    (assoc universe :particles (into [] new-particles))))
+
+(defn step
+  [universe]
+  (if-let [after-force (calculate-forces universe)]
+    (assoc after-force :particles
+           (map (fn [particle] (move-particle particle (universe :DT)))
+                (after-force :particles)))
+    {:error true}))
 
 (comment
-  (pprint ((random-universe 1 1 2) :particles)))
+  (let [u (random-universe 1 1 2)]
+    (println "Before")
+    (pprint (u :particles))
+    (println "After")
+    (pprint ((step u) :particles))
+    )
+  )

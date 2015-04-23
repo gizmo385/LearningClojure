@@ -15,6 +15,11 @@
     (+ (p1 :radius) (p2 :radius))
     (Math/sqrt (+ (Math/pow (- (p2 :y) (p1 :y)) 2) (Math/pow (- (p2 :x) (p1 :x)) 2)))))
 
+(defn colliding?
+  "Determines whether or not the two particles are colliding"
+  [p1 p2]
+  (<= (distance p1 p2) (+ (p1 :radius) (p2 :radius))))
+
 (defn calculate-force
   "Calculates the force between two particles in space."
   [p1 p2]

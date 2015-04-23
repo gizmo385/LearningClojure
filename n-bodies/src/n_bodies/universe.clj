@@ -10,16 +10,13 @@
 (defn new-universe
   "Creates a new Universe. Each Universe contains map of integers to particles where the integer
    represents the particle's ID"
-  [time-steps DT & particles]
-  {:time-steps time-steps
-   :DT DT
-   :particles (apply vec particles)})
+  [& particles]
+  {:particles (apply vec particles)})
 
 (defn random-universe
   "Creates a universe with a number of particles that have been randomly placed."
-  [time-steps DT num-particles]
-  (new-universe time-steps DT
-                (for [_ (range num-particles)]
+  [num-particles]
+  (new-universe (for [_ (range num-particles)]
                   (new-particle [(rand-in-range -5 5) (rand-in-range -5 5)]))))
 
 
@@ -43,19 +40,19 @@
 
 (defn step
   "Runs the universe for a single time-step, where DT time passes between snapshots."
-  [universe]
+  [universe DT]
   (if-let [after-force (calculate-forces universe)]
     (assoc after-force :particles
-           (map (fn [particle] (move-particle particle (universe :DT)))
+           (map (fn [particle] (move-particle particle DT))
                 (after-force :particles)))
     {:error true}))
 
 (defn simulate
   "Simulates running the Universe for the number of time steps associated with the Universe. The
    time between each time step is given by the DT amount associated with the Universe."
-  [universe]
+  [universe time-steps DT]
   (loop [universe universe
          i 0]
-    (if (< i (universe :time-steps))
-      (recur (step universe) (inc i))
+    (if (< i time-steps)
+      (recur (step universe DT) (inc i))
       universe)))

@@ -44,4 +44,6 @@
            :dx (+ (particle :dx) dvX)
            :dy (+ (particle :dy) dvY)
            :x (+ (particle :x) dpX)
-           :y (+ (particle :y) dpY))))
+           :y (+ (particle :y) dpY)
+           :forceX 0
+           :forceY 0)))

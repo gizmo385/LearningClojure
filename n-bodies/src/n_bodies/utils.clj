@@ -18,7 +18,7 @@
 (defn colliding?
   "Determines whether or not the two particles are colliding"
   [p1 p2]
-  (<= (distance p1 p2) (+ (p1 :radius) (p2 :radius))))
+  (and (not= p1 p2) (<= (distance p1 p2) (+ (p1 :radius) (p2 :radius)))))
 
 (defn calculate-force
   "Calculates the force between two particles in space."

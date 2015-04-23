@@ -30,8 +30,6 @@
   ([[x y] radius dx dy]
    (merge default-particle-values {:x x :y y :dx dx :dy dy :radius radius :id (new-particle-id)})))
 
-
-
 (defn move-particle
   "Returns a particle that has been moved based on its current velocity for a given number of
    seconds."

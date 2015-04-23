@@ -11,7 +11,7 @@
   "Creates a new Universe. Each Universe contains map of integers to particles where the integer
    represents the particle's ID"
   [& particles]
-  {:particles (apply vec particles)})
+  {:particles (vec particles)})
 
 (defn random-universe
   "Creates a universe with a number of particles that have been randomly placed."
@@ -43,6 +43,11 @@
   [number exponent]
   (reduce * (repeat exponent number)))
 
+(defn- average
+  "Calculates the average for a collection of numbers."
+  [nums]
+  (/ (reduce + nums) (count nums)))
+
 (defn- calculate-dx
   "Calculates the new dx value for this particle after colliding with the other particle."
   [this other]
@@ -54,6 +59,7 @@
      (+ (pow (- (other :x) (this :x)) 2) (pow (- (other :y) (this :y))))))
 
 (defn- calculate-dy
+  "Calculates the new dy value for this particle after colliding with the other particle."
   [this other]
   (/ (+
       (* (other :dx) (- (other :x) (this :x)) (- (other :y) (this :y)))
@@ -63,15 +69,24 @@
      (+ (pow (- (other :x) (this :x)) 2) (pow (- (other :y) (this :y)) 2))))
 
 (defn collide
-  "Resolves a collision between two particles. This function returns a 2-element vector that
-   contains the particles after the collisions have been resolved. The first and second elements of
-   the vector will correspond to p1 and p2 respectively."
+  "Calculates new dx/dy values for p1 once it has collided with p2.
+
+   This will either create or append to two new lists on the first particle. The new-dxs and
+   new-dys list maintains new velocity values as collisions are calculated. These are then averaged
+   at the end and the lists are removed from the particle maps."
   [p1 p2]
-  (let [p1-new-dx (calculate-dx p1 p2)
-        p1-new-dy (calculate-dy p1 p2)
-        p2-new-dx (calculate-dx p2 p1)
-        p2-new-dy (calculate-dy p2 p1)]
-    [(assoc p1 :dx p1-new-dx :dy p1-new-dy) (assoc p2 :dx p2-new-dx :dy p2-new-dy)]))
+  {:pre (colliding? p1 p2)}
+  (assoc p1
+         :new-dxs (conj (p1 :new-dxs) (calculate-dx p1 p2))
+         :new-dys (conj (p1 :new-dys) (calculate-dy p1 p2))))
+
+(defn handle-collisions
+  "Handles collisions for a Universe containing particles"
+  [universe]
+  (let [particles (universe :particles)]
+    (for [particle particles
+          :let [other-particles (filter #(colliding? particle %) particles)]]
+      (map #(printf "Registering collision between %s and %s\n" particle %) other-particles))))
 
 (defn step
   "Runs the universe for a single time-step, where DT time passes between snapshots."

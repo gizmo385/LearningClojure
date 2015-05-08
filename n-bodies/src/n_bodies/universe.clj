@@ -104,5 +104,8 @@
   (loop [universe universe
          i 0]
     (if (< i time-steps)
-      (recur (step universe DT) (inc i))
+      (let [next-step (step universe DT)]
+        (if (next-step :error)
+          universe
+          (recur next-step (inc i))))
       universe)))

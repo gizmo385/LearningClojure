@@ -1,12 +1,12 @@
 (ns chat-app.server
-  (:use [chat-app protocol])
+  (:use [chat-app protocol util])
   (:import [chat_app.protocol Message]
            [java.net ServerSocket]
            [java.io IOException ObjectInputStream ObjectOutputStream]))
 
 ;; Pre-declare helper functions
-(declare get-io-streams send-message receieve-message uuid error-message accept-client create-reader
-         add-client! add-client-to-room remove-client! remove-user-from-room)
+(declare send-message receieve-message error-message accept-client! create-client-reader
+         add-client! add-client-to-room remove-client! create-room! remove-user-from-room)
 
 ;; A representation for a client in this server
 ;; socket -- The socket that the client's connection is being made on
@@ -14,42 +14,47 @@
 ;; in -- The stream that messages can be read from
 ;; id -- A unique identifier for this client
 ;; client-name -- The name of the client
-(defrecord Client [socket out in id client-name])
+(defn create-client [socket out in id client-name]
+  (zipmap [:socket :out :in :id :client-name] [socket out in id client-name]))
 
 ;; A representation for an individual room in the server
 ;; room-name -- The name for this room
 ;; id -- The room's globally unique identifer
 ;; users -- The set of users recieving messages from this room
-(defrecord Room [room-name id users])
+(defn create-room [room-name id users]
+  (zipmap [:room-name :id :users] [room-name id users]))
+
+;; The ID for the global room which all clients automatically join
+(defonce global-room-id 1)
 
 (def server-state
   "The server state is a map which contains the current connected users, rooms open, and the
    server name"
   (atom {:users {}
-         :rooms {}
+         :rooms {global-room-id (create-room "Global Room" global-room-id [])}
          :name "Server"}))
 
 ;;; Message and Command Handlers
 
-(defmulti command-handler
+(defmulti server-command-handler
   "Multi-function to handle different types of server commands."
   (fn [server command] (:type command)))
 
-(defmethod command-handler :default [_ command]
+(defmethod server-command-handler :default [_ command]
   (let [error (format "Command type \"%s\" cannot be handled!" (command :type))]
     (send-message (error-message error) (command :sender))))
 
-(defmulti message-handler
+(defmulti server-message-handler
   "Multi-function to handle messages coming from users."
   (fn [server message] (:type message)))
 
-(defmethod message-handler :default [_ message]
+(defmethod server-message-handler :default [_ message]
   (let [error (format "Message type \"%s\" cannot be handled!" (message :type))]
     (send-message (error-message error) (message :sender))))
 
 ;; This message handler will automatically hand commands off to its proper command handler
-(defmethod message-handler :command [server message]
-  (command-handler server (message :contents)))
+(defmethod server-message-handler :command [server message]
+  (server-command-handler server (message :contents)))
 
 ;;; Running the server and managing clients
 
@@ -59,20 +64,21 @@
 
    port -- The port number that the server socket will listen on"
   [port]
-  ;; Accept clients, handle messages, etc
+  ;; Open the server connection
   (with-open [server (ServerSocket. port)]
     (printf "Running server on port %d\n" port)
     (loop []
       (println "Waiting for client to connect...")
-      (with-open [socket (.accept server)]
+      (let [socket (.accept server)]
+        ;; Wait to accept a client on the server
         (printf "Client has connected from %s:%d\n" (.getInetAddress socket) (.getPort socket))
-        (if-let [client (accept-client socket)]
+        (if-let [client (accept-client! socket)]
           ;; Start a thread for the new client
-          (let [handler (Thread. (create-reader client))]
+          (let [handler (Thread. (create-client-reader client))]
             (.start handler))))
-        (recur))))
+      (recur))))
 
-(defn accept-client
+(defn accept-client!
   "Accepts a new client on the socket new-client. Returns the new clients map which maps client's
    id numbers to their client map. A client map contains the following information:
 
@@ -86,28 +92,28 @@
     (let [client-name (:contents (receieve-message streams))
           id (uuid)]
       (if (string? client-name)
-        (let [new-client (Client. client-socket (streams :out) (streams :in) id client-name)]
+        (let [new-client (create-client client-socket (streams :out) (streams :in) id client-name)]
           (add-client! new-client)
           new-client)))))
 
-(defn create-room
+(defn create-room!
   "Creates a new room and assigns it a unique identifier. The room will be added to the global map
    and the new room will be returned from the function."
   [room-name]
   (let [id (uuid)
-        room (Room. room-name id #{})
+        room (create-room room-name id #{})
         current-rooms (get @server-state :rooms)]
     (swap! server-state assoc :rooms (assoc current-rooms id room))
     room))
 
-(defn create-reader
-  "Returns a function that will be used to monitor a clients connection and pass on messages."
-  [server client]
+(defn create-client-reader
+  "Returns a function that will be used to monitor a clients connection and handle messages."
+  [client]
   (fn []
     (loop [message (receieve-message client)]
-      (let [dest (get (@server-state :rooms) (message :destination))]
+      (let [dest (get (@server-state :rooms) (:destination message))]
         (cond
-          ;; If an error occurs while reading, exit
+          ;; If an error occurs while reading, remove the client from the server
           (contains? message :error)
           (remove-client! client)
 
@@ -115,17 +121,16 @@
           (nil? dest)
           (do
             (send-message
-              (error-message
-                (format "\"%d\" is not a valid room"
-                        (message :destination)))
+              (error-message (format "\"%d\" is not a valid room" (:destination message)))
               client)
             (recur (receieve-message client)))
 
-          ;; Send the message to everyone in the destination room
+          ;; Pass the message on to the proper message handler
           :default
           (do
-            (message-handler message)
+            (server-message-handler @server-state message)
             (recur (receieve-message client))))))))
+
 
 (defn receieve-message
   "Reads a message from a client's input stream"
@@ -149,18 +154,25 @@
     (let [out (to :out)]
     (try
       (.writeObject out message)
-      (catch IOException e nil)))))
+      (catch IOException e nil)))
+
+    :default
+    (throw (IllegalArgumentException. "2nd argument must be either an int or a map with :out"))))
 
 (defn add-client! [client]
   "Adds a client to the server"
-  (let [current-users (get @server-state :users)]
-    (swap! server-state assoc :users (conj current-users client))))
+  (let [current-users (get @server-state :users)
+        current-rooms (get @server-state :rooms)
+        global-room (get current-rooms global-room-id)]
+    (swap! server-state assoc
+           :users (conj current-users client)
+           :rooms (assoc current-rooms global-room-id (add-client-to-room client global-room)))))
 
 (defn add-client-to-room
   "Adds a client to the room"
   [client room]
   (let [current-users (room :users)]
-    (assoc room :users (assoc current-users (client :id) ))))
+    (assoc room :users (conj current-users client))))
 
 (defn remove-client-from-room
   "Removes a client from a room."
@@ -182,20 +194,3 @@
   "Creates an error message that is sent from the server"
   [message-text]
   (Message. (@server-state :server-name) -1 message-text :error))
-
-(defn- get-io-streams
-  "Opens up the input and output streams on a network socket and wraps them in an
-   ObjectInputStream and ObjectOutputStream respectively.
-
-   The return from this function will be a map where :out is the output stream and :in is the
-   input stream. If the function fails, nil will be returned"
-  [socket]
-  (try
-    {:out (ObjectOutputStream.  (.getOutputStream socket))
-     :in  (ObjectInputStream.   (.getInputStream socket))}
-    (catch IOException e nil)))
-
-(defn- uuid
-  "Generates a unique identifier"
-  []
-  (java.util.UUID/randomUUID))

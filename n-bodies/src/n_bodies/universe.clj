@@ -15,9 +15,10 @@
 
 (defn random-universe
   "Creates a universe with a number of particles that have been randomly placed."
-  [num-particles]
+  [num-particles & {:keys [max-p min-p] :or {max-p 5 min-p -5}}]
+  {:pre [(> max-p min-p)]}
   (new-universe (for [_ (range num-particles)]
-                  (new-particle [(rand-in-range -5 5) (rand-in-range -5 5)]))))
+                  (new-particle [(rand-in-range min-p max-p) (rand-in-range min-p max-p)]))))
 
 
 (defn calculate-force-for-particle

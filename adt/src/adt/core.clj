@@ -56,4 +56,4 @@
 (defmethod depth Empty [_] 0)
 (defmethod depth Leaf [_] 1)
 (defmethod depth Node [node] (+ 1 (max (depth (node :left)) (depth (node :right)))))
-(defmethod count-nodes :default [_] 0)
+(defmethod depth :default [_] 0)

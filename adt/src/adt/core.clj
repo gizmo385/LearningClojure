@@ -20,8 +20,9 @@
   (-> obj meta :adt boolean))
 
 ; ADT Code generation
-(defn- emit-constructor [adt-name type-name & fields]
+(defn- emit-constructor
   "Generates a constructor function for a specific type in an ADT"
+  [adt-name type-name & fields]
   (let [type-name# (symbol type-name)
         metadata {:adt (str adt-name) :adt-type type-name#}]
     (if (empty? fields)
@@ -31,11 +32,11 @@
            (struct (create-struct ~@(map keyword fields)) ~@fields)
            ~metadata)))))
 
-(defmacro defadt [adt-name & constructors]
+(defmacro defadt
   "Defines an algebraic data type based on a series of constructors"
+  [adt-name & constructors]
   `(do
      (defn ~(symbol (str adt-name "?")) [~'obj]
-       (printf "Comparing %s and %s" adt-name (adt-name ~'obj))
        (= ~(str adt-name) (adt-name ~'obj)))
      ~@(for [[type-name & fields] constructors]
          (apply (partial emit-constructor adt-name type-name) fields))))

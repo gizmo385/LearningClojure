@@ -55,11 +55,29 @@
 ; Example tree ADT
 (data Tree = Empty | Leaf value | Node value left right)
 
-(defmulti count-nodes adt-type)
-(defmethod count-nodes Empty [_] 0)
-(defmethod count-nodes Leaf [leaf] 1)
-(defmethod count-nodes Node [node] (+ 1 (count-nodes (node :left)) (count-nodes (node :right))))
-(defmethod count-nodes :default [_] 0)
+(defmulti in-order (fn [tree f] (adt-type tree)))
+(defmethod in-order Empty [_ _] nil)
+(defmethod in-order Leaf [leaf f] (f (leaf :value)))
+(defmethod in-order Node [node f]
+  (in-order (:left node) f)
+  (f (node :value))
+  (in-order (:right node) f))
+
+(defmulti pre-order (fn [tree f] (adt-type tree)))
+(defmethod pre-order Empty [_ _] nil)
+(defmethod pre-order Leaf [leaf f] (f (leaf :value)))
+(defmethod pre-order Node [node f]
+  (f (node :value))
+  (pre-order (:left node) f)
+  (pre-order (:right node) f))
+
+(defmulti post-order (fn [tree f] (adt-type tree)))
+(defmethod post-order Empty [_ _] nil)
+(defmethod post-order Leaf [leaf f] (f (leaf :value)))
+(defmethod post-order Node [node f]
+  (post-order (:left node) f)
+  (post-order (:right node) f)
+  (f (node :value)))
 
 (defmulti depth adt-type)
 (defmethod depth Empty [_] 0)

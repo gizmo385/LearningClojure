@@ -82,5 +82,27 @@
 (defmulti depth adt-type)
 (defmethod depth Empty [_] 0)
 (defmethod depth Leaf [_] 1)
-(defmethod depth Node [node] (+ 1 (max (depth (node :left)) (depth (node :right)))))
-(defmethod depth :default [_] 0)
+(defmethod depth Node [node]
+  (+ 1 (max (depth (node :left))
+            (depth (node :right)))))
+
+; Creating cons lists
+(defadt ConsList
+  (Nil)
+  (List car cdr))
+
+(defmulti cons (fn [value rest] (adt-type rest)))
+(defmethod cons Nil [value _] (List value (Nil)))
+(defmethod cons List [value rest] (List value rest))
+
+(defmulti car adt-type)
+(defmethod car Nil [_] (throw (IllegalArgumentException. "Can't call car on nil")))
+(defmethod car List [list] (:car list))
+
+(defmulti cdr adt-type)
+(defmethod cdr Nil [_] (throw (IllegalArgumentException. "Can't call cdr on nil")))
+(defmethod cdr List [list] (:cdr list))
+
+(defmulti map (fn [f list] (adt-type list)))
+(defmethod map Nil [_ _] (Nil))
+(defmethod map List [f list] (List (f (:car list)) (map f (:cdr list))))

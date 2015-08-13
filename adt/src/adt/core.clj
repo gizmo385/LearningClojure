@@ -41,11 +41,19 @@
      ~@(for [[type-name & fields] constructors]
          (apply (partial emit-constructor adt-name type-name) fields))))
 
+(defmacro data
+  "Similar to defadt but looks closer to haskell syntax because why the hell not"
+  [adt-name equals-sign & constructors]
+  `(do
+     (defn ~(symbol (str adt-name "?")) [~'obj]
+       (= ~(str adt-name) (adt-name ~'obj)))
+     ~@(for [[type-name & fields]
+             (filter (partial not= '(|))
+                     (partition-by (partial = '|) constructors))]
+         (apply (partial emit-constructor adt-name type-name) fields))))
+
 ; Example tree ADT
-(defadt Tree
-  (Empty)
-  (Leaf value)
-  (Node value left right))
+(data Tree = Empty | Leaf value | Node value left right)
 
 (defmulti count-nodes adt-type)
 (defmethod count-nodes Empty [_] 0)

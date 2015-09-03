@@ -1,7 +1,7 @@
 (ns adt.core
   "An implementation of Algebraic Data Types in Clojure"
   (:require [clojure.string :refer [join]]
-           [clojure.pprint :refer [pprint]]))
+            [clojure.pprint :refer [pprint]]))
 
 ; Utility functions
 (defn adt-name

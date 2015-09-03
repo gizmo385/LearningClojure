@@ -1,10 +1,10 @@
 # adt
 
-A Clojure library designed to ... well, that part is up to you.
+A Clojure library designed to create and work with algebraic data types
 
 ## Usage
 
-FIXME
+Check out the various examples in src/examples.
 
 ## License
 

@@ -1,41 +1,41 @@
 (ns adt.core-test
   (:require [clojure.test :refer :all]
-            [adt.core :refer :all :exclude [cons list]]))
+            [adt.core :refer :all]))
 
-; Creating cons lists
-(defadt ConsList
+; Creating my-cons lists
+(defadt my-consList
   (Nil)
   (List car cdr))
 
 ; Basic creation
-(defmulti cons (fn [value rest] (adt-type rest)))
-(defmethod cons Nil [value _] (List value (Nil)))
-(defmethod cons List [value rest] (List value rest))
+(defmulti my-cons (fn [value rest] (adt-type rest)))
+(defmethod my-cons Nil [value _] (List value (Nil)))
+(defmethod my-cons List [value rest] (List value rest))
 
-(defn list [& values]
+(defn my-list [& values]
   (if (not-empty values)
-    (cons (first values) (apply list (rest values)))
+    (my-cons (first values) (apply my-list (rest values)))
     (Nil)))
 
 ; Data access
 (defmulti car adt-type)
 (defmethod car Nil [_] (throw (IllegalArgumentException. "Can't call car on nil")))
-(defmethod car List [list] (:car list))
+(defmethod car List [my-list] (:car my-list))
 
 (defmulti cdr adt-type)
 (defmethod cdr Nil [_] (throw (IllegalArgumentException. "Can't call cdr on nil")))
-(defmethod cdr List [list] (:cdr list))
+(defmethod cdr List [my-list] (:cdr my-list))
 
-(deftest cons-lists
-  (testing "Building a Cons-List declared as an ADT"
-      (is (= (cons 1 (cons 2 (Nil)))
-             (list 1 2))))
+(deftest my-cons-lists
+  (testing "Building a my-cons-List declared as an ADT"
+      (is (= (my-cons 1 (my-cons 2 (Nil)))
+             (my-list 1 2))))
   (testing "Data accessors"
-    (let [cons-list (list 1 2 3)]
-      (is (= 1 (car cons-list)))
-      (is (= (list 2 3) (cdr cons-list))))))
+    (let [my-cons-list (my-list 1 2 3)]
+      (is (= 1 (car my-cons-list)))
+      (is (= (my-list 2 3) (cdr my-cons-list))))))
 
-; Tree ADT with data constructor
+; Tree ADT with data my-constructor
 (data Tree = Empty | Leaf value | Node value left right)
 
 (defmulti in-order (fn [tree f] (adt-type tree)))

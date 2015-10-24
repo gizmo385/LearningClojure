@@ -41,6 +41,15 @@
      ~@(for [[type-name & fields] constructors]
          (apply (partial emit-constructor adt-name type-name) fields))))
 
+(defmacro defadtfn [name [first & rest :as args] adt-var & [adt-type result :as cases]]
+  {:pre [(some #{adt-var} args)
+         (even? (count cases))]}
+  `(defn ~name [~@args]
+     (condp = (adt-type ~adt-var)
+       ~@cases
+       (throw (IllegalArgumentException.
+                (format "%s does not match any type in the ADT!" ~adt-var))))))
+
 (defmacro data
   "Similar to defadt but looks closer to haskell syntax because why the hell not"
   [adt-name equals-sign & constructors]

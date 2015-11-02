@@ -11,7 +11,7 @@
   "Creates a new Universe. Each Universe contains map of integers to particles where the integer
    represents the particle's ID"
   [& particles]
-  {:particles (vec particles)})
+  {:particles (flatten particles)})
 
 (defn random-universe
   "Creates a universe with a number of particles that have been randomly placed."

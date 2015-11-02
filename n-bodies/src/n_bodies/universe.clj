@@ -102,11 +102,4 @@
   "Simulates running the Universe for the number of time steps associated with the Universe. The
    time between each time step is given by the DT amount associated with the Universe."
   [universe time-steps DT]
-  (loop [universe universe
-         i 0]
-    (if (< i time-steps)
-      (let [next-step (step universe DT)]
-        (if (next-step :error)
-          universe
-          (recur next-step (inc i))))
-      universe)))
+  ((apply comp (repeat time-steps #(if (%1 :error) %1 (step %1 DT)))) universe))

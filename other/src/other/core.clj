@@ -17,8 +17,46 @@
       (add-attr-to-edges g :label 0 zero-transitions)
       (add-attr-to-edges g :label 1 one-transitions))))
 
+(defn divisibility-map
+  [n]
+  (zipmap
+    (range n)
+    (for [i (range n)]
+      {0 (mod (* 2 i) n)
+       1 (mod (inc (* 2 i)) n)})))
+
+(defn modulus
+  "Computes m mod n by traversing n, which should be n's divisibility map."
+  [m n]
+  (let [bits (map (comp #(Integer/parseInt %1) str) (Integer/toBinaryString m))]
+    (loop [current-state 0 [first-bit & remaining-bits] bits]
+      (if first-bit
+        (recur (get (get n current-state) first-bit) remaining-bits)
+        current-state))))
+
+(defn divisible?
+  "Determines if m is divisible by n by computing n's divisibility map and then following it.
+   For this to work, m is assumed to be a bit string."
+  [m n]
+  (zero? (modulus m (divisibility-map n))))
+
+(defn mark-divisible
+  "Marks numbers divisible by n."
+  [numbers n]
+  (let [graph (divisibility-map n)]
+    (map (comp zero? #(modulus %1 graph)) numbers)))
+
 (comment
+  (filter (comp zero? #(modulus %1 (divisibility-map 10))) (range 0 101))
+  (divisible? 325 7)  ; --> False
+  (divisible? 329 7)  ; --> True
+  (modulus 329 7)     ; --> 0
+  (modulus 325 7)     ; --> 3
+
+  ;; Computing divisibility maps and graphs
+  (divisibility-map 5)
   (clojure.pprint/pprint (divisibility-graph 250))
-  (doseq [i (range 1 3)]
-    (view (divisibility-graph i)))
+
+  ;; Generates a graphviz visualization for the divisibility graph of a number
+  (view (divisibility-graph 50))
   )

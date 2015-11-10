@@ -28,7 +28,7 @@
 (defn modulus
   "Computes m mod n by traversing n, which should be n's divisibility map."
   [m n]
-  (let [bits (map (comp #(Integer/parseInt %1) str) (Integer/toBinaryString m))]
+  (let [bits (map (comp (fn [i] (Integer/parseInt i)) str) (Integer/toBinaryString m))]
     (loop [current-state 0 [first-bit & remaining-bits] bits]
       (if first-bit
         (recur (get (get n current-state) first-bit) remaining-bits)
@@ -44,10 +44,16 @@
   "Marks numbers divisible by n."
   [numbers n]
   (let [graph (divisibility-map n)]
-    (map (comp zero? #(modulus %1 graph)) numbers)))
+    (zipmap
+      numbers
+      (map (comp zero? (fn [i] (modulus i graph))) numbers))))
 
 (comment
-  (filter (comp zero? #(modulus %1 (divisibility-map 10))) (range 0 101))
+  ;; Finding numbers in [0 .. 100] that are divisble by 10
+  (filter (fn [[n divisibility]] divisibility) (mark-divisible (range 0 101) 10))
+  (clojure.pprint/pprint (into (sorted-map) (mark-divisible (range 0 101) 10)))
+
+  ;; Testing divisibility and modulus operations
   (divisible? 325 7)  ; --> False
   (divisible? 329 7)  ; --> True
   (modulus 329 7)     ; --> 0

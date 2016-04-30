@@ -1,6 +1,5 @@
 (ns other.core
-  (:require [clojure.java.io :refer [as-file file]]
-            [loom.graph :refer [digraph add-edges]]
+  (:require [loom.graph :refer [digraph add-edges]]
             [loom.attr :refer [add-attr-to-edges]]
             [loom.io :refer [view dot]]))
 
@@ -28,11 +27,8 @@
 (defn modulus
   "Computes m mod n by traversing n, which should be n's divisibility map."
   [m n]
-  (let [bits (map (comp (fn [i] (Integer/parseInt i)) str) (Integer/toBinaryString m))]
-    (loop [current-state 0 [first-bit & remaining-bits] bits]
-      (if first-bit
-        (recur (get (get n current-state) first-bit) remaining-bits)
-        current-state))))
+  (let [bits (map (fn [i] (Integer/parseInt (str i))) (Integer/toBinaryString m))]
+    (reduce (fn [state bit] (get (get n state) bit)) 0 bits)))
 
 (defn divisible?
   "Determines if m is divisible by n by computing n's divisibility map and then following it.
@@ -50,14 +46,14 @@
 
 (comment
   ;; Finding numbers in [0 .. 100] that are divisble by 10
-  (filter (fn [[n divisibility]] divisibility) (mark-divisible (range 0 101) 10))
+  (filter second (mark-divisible (range 0 101) 10))
   (clojure.pprint/pprint (into (sorted-map) (mark-divisible (range 0 101) 10)))
 
   ;; Testing divisibility and modulus operations
   (divisible? 325 7)  ; --> False
   (divisible? 329 7)  ; --> True
-  (modulus 329 7)     ; --> 0
-  (modulus 325 7)     ; --> 3
+  (modulus 329 (divisibility-map 7))     ; --> 0
+  (modulus 325 (divisibility-map 7))     ; --> 3
 
   ;; Computing divisibility maps and graphs
   (divisibility-map 5)
@@ -65,4 +61,5 @@
 
   ;; Generates a graphviz visualization for the divisibility graph of a number
   (view (divisibility-graph 50))
+  (view (divisibility-graph 4))
   )

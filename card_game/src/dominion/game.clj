@@ -1,4 +1,4 @@
-(ns cards.game
+(ns dominion.game
   "Defines how to create and manage the game state.")
 
 ;;; State templates
@@ -16,8 +16,18 @@
    :discard []})
 
 ;;; Constructor functions
-(defn new-player [player-name]
+(defn new-player
+  "Creates a new player with a specific name"
+  [player-name]
   (assoc player-state-template :name player-name))
+
+(defn new-game-state
+  "Given a map of cards to numbers representing cards on the board, creates a game state. Players
+   can be supplied as optional arguments"
+  [piles-map & players]
+  (assoc game-state-template
+         :piles piles-map
+         :players (apply merge (for [player players] {(java.util.UUID/randomUUID) player}))))
 
 ;;; Access functions
 (defn get-deck [game-state player-id]
@@ -29,8 +39,8 @@
 (defn get-discard [game-state player-id]
   (get-in game-state [:players player-id :discard]))
 
-;;; Modifier functions
-(defn- shuffle-discard [game-state player-id]
+;;; Managing the card draws for the player
+(defn shuffle-discard [game-state player-id]
   (-> game-state
       (assoc-in [:players player-id :deck]
                 (shuffle (get-discard game-state player-id)))

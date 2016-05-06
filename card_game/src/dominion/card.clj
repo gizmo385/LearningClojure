@@ -1,5 +1,5 @@
-(ns cards.card
-  (:require [cards.game :refer [draw-n-from-deck]]))
+(ns dominion.card
+  (:require [dominion.game :refer [draw-n-from-deck]]))
 
 ;; Defining cards
 (def card-template

@@ -1,5 +1,5 @@
-(defproject app "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+(defproject dominion "0.1.0-SNAPSHOT"
+  :description "A Dominion implementation in Clojure"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

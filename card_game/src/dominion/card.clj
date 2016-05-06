@@ -42,6 +42,10 @@
   (fn [game-state player-id]
     (update-in game-state [:players player-id :victory-points] (partial + delta))))
 
+(defn add-buy-points [amount]
+  (fn [game-state player-id]
+    (update-in game-state [:players player-id :buy-pointers] + amount)))
+
 (defn- pickup-helper [game-state target-player card-to-pickup]
   (if (zero? (get (:piles game-state) card-to-pickup))
     ;; If the cards are empty, don't change the game state
@@ -60,7 +64,8 @@
       game-state
       (remove #{player-id} (keys (:players game-state))))))
 
-;;; Some common cards
+;;; Card definitions
+;;; Victory cards
 (def estate (new-card "Estate"
                       ""
                       2
@@ -82,6 +87,22 @@
                      :can-buy? false
                      :pickup-action (change-victory-point-action -1)))
 
+;;; Treasure Cards
+(def copper (new-card "Copper"
+                      ""
+                      0
+                      :play-action (add-buy-points 1)))
+
+(def silver (new-card "Silver"
+                      ""
+                      0
+                      :play-action (add-buy-points 3)))
+
+(def gold (new-card "Gold"
+                      ""
+                      0
+                      :play-action (add-buy-points 5)))
+;;; Kingdom cards
 (def witch (new-card "Witch"
                      "All other players pick up a Curse card."
                      5

@@ -10,6 +10,7 @@
 (def player-state-template
   "The default template for the player's in the game"
   {:victory-points 0
+   :buy-points 0
    :name nil
    :deck []
    :hand []

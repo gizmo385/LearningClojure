@@ -1,4 +1,5 @@
-(ns cards.card)
+(ns cards.card
+  (:require [cards.game :refer [draw-n-from-deck]]))
 
 ;; Defining cards
 (def card-template
@@ -42,12 +43,12 @@
     (update-in game-state [:players player-id :victory-points] (partial + delta))))
 
 (defn- pickup-helper [game-state target-player card-to-pickup]
-  (if (zero? (get (:deck game-state) card-to-pickup))
+  (if (zero? (get (:piles game-state) card-to-pickup))
     ;; If the cards are empty, don't change the game state
     game-state
     (let [pickup-action (:pickup-action card-to-pickup)]
       (as-> game-state game-state
-        (update-in game-state [:deck card-to-pickup] dec)
+        (update-in game-state [:piles card-to-pickup] dec)
         (update-in game-state [:players target-player :cards] conj card-to-pickup)
         (pickup-action game-state target-player)))))
 
@@ -59,7 +60,7 @@
       game-state
       (remove #{player-id} (keys (:players game-state))))))
 
-
+;;; Some common cards
 (def estate (new-card "Estate"
                       ""
                       2
@@ -86,17 +87,8 @@
                      5
                      :buy-action (force-card-pickup curse)))
 
-(comment
-  (clojure.pprint/pprint
-    (let [game-state {:players {1 {:victory-points 0
-                                 :name "Chris"
-                                 :cards []}
-                              2 {:victory-points 7
-                                 :name "Matt"
-                                 :cards []}}
-                    :deck {curse 30
-                           estate 10
-                           duchy 10
-                           province 10}}]
-    ((force-card-pickup curse) game-state 1)
-    )))
+(def smithy (new-card "Smithy"
+                      "Draws 3 cards from your deck into your hand."
+                      4
+                      :play-action (fn [game-state player-id]
+                                     (draw-n-from-deck game-state player-id 3))))

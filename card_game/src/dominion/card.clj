@@ -84,6 +84,12 @@
 (defn add-buys [num-buys]
   (change-player-stat :available-buys num-buys))
 
+(defn add-discards [discards]
+  (change-player-stat :available-discards discards))
+
+(defn add-trashes [trashes]
+  (change-player-stat :available-trashes trashes))
+
 ;;; Card definitions
 ;;; Victory cards
 (def estate (new-card "Estate"

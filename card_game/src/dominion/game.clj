@@ -13,6 +13,8 @@
    :available-money 0
    :available-buys 1
    :available-actions 1
+   :available-discards 0
+   :available-trashes 0
    :name nil
    :deck []
    :hand []

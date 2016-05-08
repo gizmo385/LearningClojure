@@ -1,5 +1,6 @@
 (ns dominion.card
-  (:require [dominion.game :as game]))
+  (:require [dominion.game :as game]
+            [clojure.string :refer [lower-case]]))
 
 ;; Defining cards
 (def card-template
@@ -31,15 +32,14 @@
    state. The second argument is the name of the player that is enacting the action (either
    buying, picking up, or playing a card)
    "
-  [card-name description cost card-type & {:keys [can-buy? buy-action pickup-action play-action]
-                                           :as additional-features}]
+  [card-name description cost card-type & additional-features]
   (merge
     card-template
     {:name card-name
      :description description
      :type card-type
      :cost cost}
-    additional-features))
+    (apply hash-map additional-features)))
 
 
 ;;; Common card actions
@@ -96,84 +96,53 @@
   (change-player-stat :available-trashes trashes))
 
 ;;; Card definitions
+(defmacro defcard
+  "Custom syntax for defining cards. Defines a symbol that is the lower-case of the card name and
+   uses the card's description as the symbol's docstring."
+  [name description cost type & additional-features]
+  `(def ~(-> name lower-case symbol)
+     ~description
+     (new-card ~(str name) ~description ~cost ~type ~@additional-features)))
+
 ;;; Victory cards
-(def estate (new-card "Estate"
-                      nil
-                      2
-                      :victory
-                      :pickup-action (add-victory-points 1)))
+(defcard Estate "Adds a victory point." 2 :victory
+                  :pickup-action (add-victory-points 1))
 
-(def duchy (new-card "Duchy"
-                     nil
-                     5
-                     :victory
-                     :pickup-action (add-victory-points 3)))
+(defcard Duchy "Adds 3 victory points." 5 :victory
+                  :pickup-action (add-victory-points 3))
 
-(def province (new-card "Province"
-                        nil
-                        8
-                        :victory
-                        :pickup-action (add-victory-points 6)))
+(defcard Province "Adds 5 victory points." 8 :victory
+                  :pickup-action (add-victory-points 5))
 
-(def curse (new-card "Curse"
-                     "Decrements your victory points by 2."
-                     0
-                     :victory
-                     :can-buy? false
-                     :pickup-action (add-victory-points -1)))
+(defcard Curse "Decrements your victory points by 1" 0 :victory
+  :can-buy? false
+  :pickup-action (add-victory-points -1))
 
 ;;; Treasure Cards
-(def copper (new-card "Copper"
-                      nil
-                      0
-                      :treasure
-                      :play-action (add-money 1)))
+(defcard Copper "+$1 for buys." 0 :treasure
+  :play-action (add-money 1))
 
-(def silver (new-card "Silver"
-                      nil
-                      0
-                      :treasure
-                      :play-action (add-money 3)))
+(defcard Silver "+$2 for buys." 3 :treasure
+  :play-action (add-money 2))
 
-(def gold (new-card "Gold"
-                      nil
-                      0
-                      :treasure
-                      :play-action (add-money 5)))
+(defcard Gold "+$3 for buys." 6 :treasure
+  :play-action (add-money 3))
+
 ;;; Kingdom cards
-(def witch (new-card "Witch"
-                     "All other players pick up a Curse card."
-                     5
-                     :action
-                     :play-action (combine-actions (draw-cards 2) (force-card-pickup curse))))
+(defcard Witch "+2 Cards. Each other player gains a curse card." 5 :action
+  :play-action (combine-actions (draw-cards 2) (force-card-pickup curse)))
 
-(def smithy (new-card "Smithy"
-                      "Draws 3 cards from your deck into your hand."
-                      4
-                      :action
-                      :play-action (draw-cards 3)))
+(defcard Smithy "+3 Cards" 4 :action
+  :play-action (draw-cards 3))
 
-(def village (new-card "Village"
-                       "+1 Card; +2 Actions"
-                       3
-                       :action
-                       :play-action (combine-actions (draw-cards 1) (add-actions 2))))
+(defcard Village "+1 Card; +2 Actions" 3 :action
+  :play-action (combine-actions (draw-cards 1) (add-actions 2)))
 
-(def festival (new-card "Festival"
-                        "+2 Actions; +1 Buy; +$2"
-                        5
-                        :action
-                        :play-action (combine-actions (add-actions 2) (add-buys 1) (add-money 2))))
+(defcard Festival "+2 Actions; +1 Buy; +$2" 5 :action
+  :play-action (combine-actions (add-actions 2) (add-buys 1) (add-money 2)))
 
-(def laboratory (new-card "Laboratory"
-                          "+2 Cards; +1 Action"
-                          5
-                          :action
-                          :play-action (combine-actions (draw-cards 2) (add-actions 1))))
+(defcard Laboratory "+2 Cards; +1 Action" 5 :action
+  :play-action (combine-actions (draw-cards 2) (add-actions 1)))
 
-(def market (new-card "Market"
-                      "+1 Card; +1 Action; +1 Buy; +$1"
-                      5
-                      :action
-                      :play-action (combine-actions (draw-cards 1) (add-actions 1) (add-buys 1)
-                                     (add-money 1))))
+(defcard Market "+1 Card; +1 Action; +1 Buy; +$1" 5 :action
+  :play-action (combine-actions (draw-cards 1) (add-actions 1) (add-buys 1) (add-money 1)))

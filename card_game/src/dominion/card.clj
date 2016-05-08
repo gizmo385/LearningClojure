@@ -10,6 +10,7 @@
    :cost 0
    :type nil
    :can-buy? true
+   :trashed-on-play false
    :buy-action identity
    :pickup-action identity
    :play-action identity})
@@ -24,6 +25,7 @@
     * buy-action -- The action performed on the game state when the card is bought
     * pickup-action -- The action performed on the game state when the card is picked up
     * play-action -- The action performed on the game state when the card is played
+    * trashed-on-play -- Determines whether a card is trashed when played
 
    All action functions are functions are two arguments. The first argument is the current game
    state. The second argument is the name of the player that is enacting the action (either

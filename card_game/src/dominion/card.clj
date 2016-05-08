@@ -146,3 +146,19 @@
 
 (defcard Market "+1 Card; +1 Action; +1 Buy; +$1" 5 :action
   :play-action (combine-actions (draw-cards 1) (add-actions 1) (add-buys 1) (add-money 1)))
+
+(defn- library-play-action
+  "Implements the play action for the Library card."
+  [game-state player-id]
+  (letfn [(not-action-card? [card] (let [res (not= :action (:type card))] (println res) res))]
+    (loop [game-state game-state]
+      (if (and (>= 7 (count (game/get-hand game-state player-id)))
+               (game/can-draw? game-state player-id))
+        (recur (game/draw-from-deck game-state player-id not-action-card?))
+        game-state))))
+
+(defcard Library
+  "Draw until you have 7 cards in hand. You may set aside any Action cards drawn this way, as you
+   draw them; discard the set aside cards after you finish drawing."
+  5 :action
+  :play-action library-play-action)

@@ -8,14 +8,16 @@
   {:name nil
    :description nil
    :cost 0
+   :type nil
    :can-buy? true
    :buy-action identity
    :pickup-action identity
    :play-action identity})
 
 (defn new-card
-  "This creates a new game card. A game card has a name, a description, and an action which acts
-   on the game state and the player playing the card.
+  "This creates a new game card. A game card has a name, description, cost, and a card type
+   (action, treasure, etc.). Additionally, they additional features which may or may not be
+   different for each card.
 
    Additional features a card can have:
     * can-buy? -- Determines whether or not a card can be bought
@@ -27,12 +29,13 @@
    state. The second argument is the name of the player that is enacting the action (either
    buying, picking up, or playing a card)
    "
-  [card-name description cost & {:keys [can-buy? buy-action pickup-action play-action]
-                                 :as additional-features}]
+  [card-name description cost card-type & {:keys [can-buy? buy-action pickup-action play-action]
+                                           :as additional-features}]
   (merge
     card-template
     {:name card-name
      :description description
+     :type card-type
      :cost cost}
     additional-features))
 
@@ -93,69 +96,82 @@
 ;;; Card definitions
 ;;; Victory cards
 (def estate (new-card "Estate"
-                      ""
+                      nil
                       2
+                      :victory
                       :pickup-action (add-victory-points 1)))
 
 (def duchy (new-card "Duchy"
-                     ""
+                     nil
                      5
+                     :victory
                      :pickup-action (add-victory-points 3)))
 
 (def province (new-card "Province"
-                        ""
+                        nil
                         8
+                        :victory
                         :pickup-action (add-victory-points 6)))
 
 (def curse (new-card "Curse"
                      "Decrements your victory points by 2."
                      0
+                     :victory
                      :can-buy? false
                      :pickup-action (add-victory-points -1)))
 
 ;;; Treasure Cards
 (def copper (new-card "Copper"
-                      ""
+                      nil
                       0
+                      :treasure
                       :play-action (add-money 1)))
 
 (def silver (new-card "Silver"
-                      ""
+                      nil
                       0
+                      :treasure
                       :play-action (add-money 3)))
 
 (def gold (new-card "Gold"
-                      ""
+                      nil
                       0
+                      :treasure
                       :play-action (add-money 5)))
 ;;; Kingdom cards
 (def witch (new-card "Witch"
                      "All other players pick up a Curse card."
                      5
+                     :action
                      :play-action (combine-actions (draw-cards 2) (force-card-pickup curse))))
 
 (def smithy (new-card "Smithy"
                       "Draws 3 cards from your deck into your hand."
                       4
+                      :action
                       :play-action (draw-cards 3)))
 
 (def village (new-card "Village"
                        "+1 Card; +2 Actions"
                        3
+                       :action
                        :play-action (combine-actions (draw-cards 1) (add-actions 2))))
 
 (def festival (new-card "Festival"
                         "+2 Actions; +1 Buy; +$2"
                         5
+                        :action
                         :play-action (combine-actions (add-actions 2) (add-buys 1) (add-money 2))))
 
 (def laboratory (new-card "Laboratory"
                           "+2 Cards; +1 Action"
                           5
+                          :action
                           :play-action (combine-actions (draw-cards 2) (add-actions 1))))
 
 (def market (new-card "Market"
                       "+1 Card; +1 Action; +1 Buy; +$1"
                       5
+                      :action
                       :play-action (combine-actions (draw-cards 1) (add-actions 1) (add-buys 1)
                                      (add-money 1))))

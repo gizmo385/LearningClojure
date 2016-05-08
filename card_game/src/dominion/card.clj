@@ -106,7 +106,7 @@
 
 ;;; Victory cards
 (defcard Estate "Adds a victory point." 2 :victory
-                  :pickup-action (add-victory-points 1))
+  :pickup-action (add-victory-points 1))
 
 (defcard Duchy "Adds 3 victory points." 5 :victory
                   :pickup-action (add-victory-points 3))

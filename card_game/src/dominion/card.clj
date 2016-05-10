@@ -41,12 +41,30 @@
      :cost cost}
     (apply hash-map additional-features)))
 
+;;; Card Creation
+(defmacro defcard
+  "Custom syntax for defining cards. Defines a symbol that is the lower-case of the card name and
+   uses the card's description as the symbol's docstring.
 
-;;; Common card actions
+   (defcard Estate \"Adds a victory point.\" 2 :victory
+     :pickup-action (add-victory-points 1))
+
+   (def estate
+     \"Adds a victory point.\"
+     (new-card \"Estate\" \"Adds a victory point.\" 2 :victory
+       :pickup-action (add-victory-points 1)))
+   "
+  [name description cost type & additional-features]
+  `(def ~(-> name lower-case symbol)
+     ~description
+     (new-card ~(str name) ~description ~cost ~type ~@additional-features)))
+
+;;; General action functions
 (defn combine-actions [& actions]
   (fn [game-state player-id]
     (reduce (fn [game-state action] (action game-state player-id)) game-state actions)))
 
+;;; Card draw actions
 (defn- pickup-helper [game-state target-player card-to-pickup]
   (if (zero? (get (:piles game-state) card-to-pickup))
     ;; If the cards are empty, don't change the game state
@@ -67,42 +85,43 @@
       game-state
       (remove #{player-id} (keys (:players game-state))))))
 
+(defn draw-cards
+  "Creates an action implementation to draw a particular number of cards for a player."
+  [num-cards]
+  (fn [game-state player-id]
+    (game/draw-n-from-deck game-state player-id num-cards)))
+
+;;; Player stat change actions
 (defn- change-player-stat
   "Updates a single player stat, such as available buys or actions."
   [stat delta]
   (fn [game-state player-id]
     (update-in game-state [:players player-id stat] + delta)))
 
-(defn draw-cards [num-cards]
-  (fn [game-state player-id]
-    (game/draw-n-from-deck game-state player-id num-cards)))
-
-(defn add-victory-points [victory-points]
+(defn add-victory-points
+  "Creates an action implementation to increase a players victory points."
+  [victory-points]
   (change-player-stat :victory-points victory-points))
 
 (defn add-actions [actions]
+  "Creates an action implementation to increase a players actions"
   (change-player-stat :available-actions actions))
 
 (defn add-money [money]
+  "Creates an action implementation to increase a players money"
   (change-player-stat :available-money money))
 
 (defn add-buys [num-buys]
+  "Creates an action implementation to increase a players buys"
   (change-player-stat :available-buys num-buys))
 
 (defn add-discards [discards]
+  "Creates an action implementation to increase a players discards"
   (change-player-stat :available-discards discards))
 
 (defn add-trashes [trashes]
+  "Creates an action implementation to increase a players trashes"
   (change-player-stat :available-trashes trashes))
-
-;;; Card definitions
-(defmacro defcard
-  "Custom syntax for defining cards. Defines a symbol that is the lower-case of the card name and
-   uses the card's description as the symbol's docstring."
-  [name description cost type & additional-features]
-  `(def ~(-> name lower-case symbol)
-     ~description
-     (new-card ~(str name) ~description ~cost ~type ~@additional-features)))
 
 ;;; Victory cards
 (defcard Estate "Adds a victory point." 2 :victory

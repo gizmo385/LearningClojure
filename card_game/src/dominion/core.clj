@@ -1,22 +1,22 @@
 (ns dominion.core
-  (:require [dominion.card :as cards]
+  (:require [dominion.sets.base :as base]
             [dominion.game :as game]))
 
 (def default-piles
-  {cards/curse    30
-   cards/estate   12
-   cards/duchy    12
-   cards/province 12
-   cards/copper   30
-   cards/silver   30
-   cards/gold     30
-   cards/smithy   10
-   cards/witch    10})
+  {base/curse    30
+   base/estate   12
+   base/duchy    12
+   base/province 12
+   base/copper   30
+   base/silver   30
+   base/gold     30
+   base/smithy   10
+   base/witch    10})
 
 (def starting-hand
   (concat
-    (repeat 3 cards/estate)
-    (repeat 7 cards/copper)))
+    (repeat 3 base/estate)
+    (repeat 7 base/copper)))
 
 (comment
   (require '[clojure.pprint :refer [pprint]])

@@ -61,3 +61,16 @@
    draw them; discard the set aside cards after you finish drawing."
   5 :action
   :play-action library-play-action)
+
+(defcard Chapel "Trash up to 4 cards from your hand." 2 :action
+  :play-action (fn [game-state player-id]
+                 (assoc-in game-state [:players player-id :available-trashes] 4)))
+
+(defcard Workshop "Gain a card costing up to $4." 3 :action
+  :play-action (fn [game-state player-id]
+                 (assoc-in game-state [:players player-id :free-buy-amount] 4)))
+
+(defcard Feast "Trash this card. Gain a card costing up to $5." 4 :action
+  :play-action (fn [game-state player-id]
+                 (assoc-in game-state [:players player-id :free-buy-amount] 5))
+  :trashed-on-play true)
